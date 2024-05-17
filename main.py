@@ -71,7 +71,9 @@ def project_list():
     return get_projects()
 
 @app.get('/chat/')
-def get_chat_history(thread_id: str | None, project_id: int | None, page: int = 0, limit: int = 5):
+def get_chat_history(thread_id: str | None = None, project_id: int | None = None, page: int = 0, limit: int = 5):
+    if thread_id and project_id:
+        raise HTTPException(status_code=400, detail="Provide only project_id or thread_id")
     if project_id:
         try:
             data, error = supabase.table('chat_history').select('*').eq('project_id', project_id).order('created_at', desc=True).limit(limit).offset(page*limit).execute()
