@@ -66,35 +66,44 @@ def patch_assistant(project: int, t_id: str):
 
     return {"result": "JSON updated"}
 
+
 @app.get('/projects/')
 def project_list():
     return get_projects()
 
+
 @app.get('/chat/')
 def get_chat_history(thread_id: str | None = None, project_id: int | None = None, page: int = 0, limit: int = 5):
     if thread_id and project_id:
-        raise HTTPException(status_code=400, detail="Provide only project_id or thread_id")
+        raise HTTPException(
+            status_code=400, detail="Provide only project_id or thread_id")
     if project_id:
         try:
-            data, error = supabase.table('chat_history').select('*').eq('project_id', project_id).order('created_at', desc=True).limit(limit).offset(page*limit).execute()
+            data, error = supabase.table('chat_history').select(
+                '*').eq('project_id', project_id).order('created_at', desc=True).limit(limit).offset(page*limit).execute()
         except:
             raise HTTPException(status_code=400, detail=error[1])
     elif thread_id:
         try:
-            data, error = supabase.table('chat_history').select('*').eq('thread_id', thread_id).order('created_at', desc=True).limit(limit).offset(page*limit).execute()
+            data, error = supabase.table('chat_history').select(
+                '*').eq('thread_id', thread_id).order('created_at', desc=True).limit(limit).offset(page*limit).execute()
         except:
             raise HTTPException(status_code=400, detail=error[1])
     else:
-        raise HTTPException(status_code=400, detail="Provide either project_id or thread_id")
-    
+        raise HTTPException(
+            status_code=400, detail="Provide either project_id or thread_id")
+
     return data[1]
 
+
 @app.post('/upload/', status_code=200)
-def upload_chat_history(role: str , project_id: int, thread_id: str, message: str):
-    insert_chat_history(project_id=project_id, thread_id=thread_id, message= message, role=role)
+def upload_chat_history(role: str, project_id: int, thread_id: str, message: str):
+    insert_chat_history(project_id=project_id,
+                        thread_id=thread_id, message=message, role=role)
     return {"status": "success"}
 
+
 @app.post('/add/', status_code=200)
-def upload_group_thread(project_id: int, email: EmailStr):
+def add_member_to_groupchat(project_id: int, email: EmailStr):
     insert_group_thread(project_id=project_id, email=email)
-    return {"status" : "completed"}
+    return {"status": "completed"}

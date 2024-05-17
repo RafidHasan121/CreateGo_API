@@ -1,8 +1,10 @@
 from io import BytesIO, StringIO
 import json
+from fastapi import HTTPException
 import tiktoken
 import os
 from supabase import create_client, Client
+from postgrest.exceptions import APIError
 from dotenv import load_dotenv
 
 # load dotenv
@@ -121,23 +123,32 @@ def get_routes(supabase, project_id):
     return response
 
 
-def insert_chat_history(project_id, thread_id, message, role = "user"):
+def insert_chat_history(project_id, thread_id, message, role="user"):
     supabase = init_supabase()
-    data, count = supabase.table('chat_history').insert({
+    try:
+        data, count = supabase.table('chat_history').insert({
         "project_id": project_id,
         "thread_id": thread_id,
         "message": message,
         "role": role
     }).execute()
+    except APIError as e:
+        raise HTTPException(status_code=400, detail=e.message)
     return data
 
 def insert_group_thread(project_id, email):
     supabase = init_supabase()
-    member = supabase.table('profiles').select('id').eq('email', email).execute()
-    data, count  = supabase.table('access_control').insert({
+    member = supabase.table('profiles').select(
+        'id').eq('email', email).execute()
+    if member.count == None:
+        raise HTTPException(status_code=400, detail="User not found")
+    try:
+        data, count = supabase.table('access_control').insert({
         "project_id": project_id,
-        "member_id": member.data[0].get('id')
+        "member": member.data[0].get('id')
     }).execute()
+    except APIError as e:
+        raise HTTPException(status_code=400, detail=e.message)
     return data
 
 def continue_run_request(client, project, msg, t_id):
@@ -147,7 +158,7 @@ def continue_run_request(client, project, msg, t_id):
         content=msg,
     )
 
-    insert_chat_history(project_id=project, thread_id=t_id,message=msg)
+    insert_chat_history(project_id=project, thread_id=t_id, message=msg)
 
     return thread_message
 
@@ -167,12 +178,13 @@ def new_run_request(client, msg, project_id):
         empty_thread.id,
         role="user",
         content=msg,
-        file_ids = id_list
+        file_ids=id_list
     )
 
     # creating chat history entry
 
-    insert_chat_history(project_id=project_id,thread_id=thread_message.thread_id,message=msg)
+    insert_chat_history(project_id=project_id,
+                        thread_id=thread_message.thread_id, message=msg)
 
     check5 = timer()
 
