@@ -168,6 +168,10 @@ def new_run_request(client, msg, project_id):
 
     id_list = json_uploader(client, project_id)
 
+    objects = []
+    for i in id_list:
+        objects.append({"file_id": i, "tools": [{"type": "code_interpreter"}]})
+    
     start = timer()
 
     # creating empty thread and message
@@ -178,7 +182,7 @@ def new_run_request(client, msg, project_id):
         empty_thread.id,
         role="user",
         content=msg,
-        file_ids=id_list
+        attachments=objects
     )
 
     # creating chat history entry

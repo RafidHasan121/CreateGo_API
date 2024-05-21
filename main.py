@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import EmailStr
+from pydantic import EmailStr, BaseModel
 from supabase import create_client, Client
 from openai import OpenAI
 
@@ -59,18 +59,22 @@ def get_assistant(thread_id: str):
 
     return StreamingResponse(streaming_generator(run), status_code=200, media_type="text/event-stream")
 
+class post_assistant_model(BaseModel):
+    message: str
+    project: int
+    t_id: str | None = None 
 
 @app.post("/")
-def post_assistant(message: str, project: int, t_id: str | None = None):
+def post_assistant(data: post_assistant_model):
     # previous thread
 
-    if t_id:
-        message = continue_run_request(client, project, message, t_id)
+    if data.t_id:
+        message = continue_run_request(client, data.project, data.message, data.t_id)
 
     # new thread
 
     else:
-        message = new_run_request(client, message, project)
+        message = new_run_request(client, data.message, data.project)
 
     return {"thread_id": message.thread_id}
 
@@ -120,15 +124,23 @@ def get_chat_history(thread_id: str | None = None, project_id: int | None = None
 
     return data[1]
 
+class upload_chat_history_model(BaseModel):
+    role: str
+    project_id: int
+    thread_id: str
+    message: str
 
 @app.post('/upload/', status_code=200)
-def upload_chat_history(role: str, project_id: int, thread_id: str, message: str):
-    insert_chat_history(project_id=project_id,
-                        thread_id=thread_id, message=message, role=role)
+def upload_chat_history(data: upload_chat_history_model):
+    insert_chat_history(project_id=data.project_id,
+                        thread_id=data.thread_id, message=data.message, role=data.role)
     return {"status": "success"}
 
+class add_member_to_groupchat_model(BaseModel):
+    project_id: int
+    email: EmailStr
 
 @app.post('/add/', status_code=200)
-def add_member_to_groupchat(project_id: int, email: EmailStr):
-    insert_group_thread(project_id=project_id, email=email)
+def add_member_to_groupchat(data: add_member_to_groupchat_model):
+    insert_group_thread(project_id=data.project_id, email=data.email)
     return {"status": "completed"}
