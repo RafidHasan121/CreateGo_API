@@ -8,7 +8,32 @@ from services import *
 import os
 
 # global vars
-app = FastAPI()
+description = """
+## /
+
+**POST** = creating a new thread with the assistant.\n
+**GET** = running the assistant and getting the assistant response.\n
+**PATCH** = After updating the creatego JSON file, uploads the updated JSON to the thread.
+
+## /Projects/
+
+**GET** = Get all the projects.
+
+## /Chat/
+
+**GET** = Get chat history of a project or a thread.
+
+## /Upload/
+
+**POST** = Upload chat history to the database.
+
+## /Add/
+
+**POST** = Add a member to a group chat.
+
+"""
+
+app = FastAPI(title="Creatego API", description=description)
 
 client = OpenAI(api_key=os.environ.get("API_KEY"))
 
