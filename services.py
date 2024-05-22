@@ -122,6 +122,10 @@ def get_routes(supabase, project_id):
         "routes").eq('id', project_id).execute()
     return response
 
+def history_checker(supabase, project_id):
+    response = supabase.table('chat_history').select(
+        "thread_id").eq('project_id', project_id).execute()
+    return response
 
 def insert_chat_history(project_id, thread_id, message, role="user"):
     supabase = init_supabase()

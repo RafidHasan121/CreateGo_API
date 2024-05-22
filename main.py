@@ -59,20 +59,24 @@ def get_assistant(thread_id: str):
 
     return StreamingResponse(streaming_generator(run), status_code=200, media_type="text/event-stream")
 
+
 class post_assistant_model(BaseModel):
     message: str
     project: int
-    t_id: str | None = None 
+
 
 @app.post("/")
 def post_assistant(data: post_assistant_model):
+
+    thread_id = history_checker(supabase, data.project)
+
     # previous thread
 
-    if data.t_id:
-        message = continue_run_request(client, data.project, data.message, data.t_id)
+    if thread_id.data:
+        message = continue_run_request(client, data.project, data.message, thread_id.data[0].get('thread_id'))
 
     # new thread
-
+        
     else:
         message = new_run_request(client, data.message, data.project)
 
@@ -80,16 +84,17 @@ def post_assistant(data: post_assistant_model):
 
 
 @app.patch("/", status_code=200)
-def patch_assistant(project: int, t_id: str):
+def patch_assistant(project: int):
     json_data = get_routes(project)
     id_list = json_uploader(client, project)
+    thread_id = history_checker(supabase, project)
     client.beta.threads.messages.create(
-        thread_id=t_id, role="user",
+        thread_id=thread_id, role="user",
         content="the updated json for the project has been attached to this message, future queries are based on this JSON",
         file_ids=id_list)
 
     run = client.beta.threads.runs.create(
-        thread_id=t_id,
+        thread_id=thread_id,
         assistant_id=os.environ.get("ASSISTANT_ID"),
     )
 
@@ -124,11 +129,13 @@ def get_chat_history(thread_id: str | None = None, project_id: int | None = None
 
     return data[1]
 
+
 class upload_chat_history_model(BaseModel):
     role: str
     project_id: int
     thread_id: str
     message: str
+
 
 @app.post('/upload/', status_code=200)
 def upload_chat_history(data: upload_chat_history_model):
@@ -136,9 +143,11 @@ def upload_chat_history(data: upload_chat_history_model):
                         thread_id=data.thread_id, message=data.message, role=data.role)
     return {"status": "success"}
 
+
 class add_member_to_groupchat_model(BaseModel):
     project_id: int
     email: EmailStr
+
 
 @app.post('/add/', status_code=200)
 def add_member_to_groupchat(data: add_member_to_groupchat_model):
