@@ -122,38 +122,44 @@ def get_routes(supabase, project_id):
         "routes").eq('id', project_id).execute()
     return response
 
+
 def history_checker(supabase, project_id):
     response = supabase.table('chat_history').select(
         "thread_id").eq('project_id', project_id).execute()
     return response
 
+
 def insert_chat_history(project_id, thread_id, message, role="user"):
     supabase = init_supabase()
     try:
         data, count = supabase.table('chat_history').insert({
-        "project_id": project_id,
-        "thread_id": thread_id,
-        "message": message,
-        "role": role
-    }).execute()
+            "project_id": project_id,
+            "thread_id": thread_id,
+            "message": message,
+            "role": role
+        }).execute()
     except APIError as e:
         raise HTTPException(status_code=400, detail=e.message)
     return data
+
 
 def insert_group_thread(project_id, email):
     supabase = init_supabase()
     member = supabase.table('profiles').select(
         'id').eq('email', email).execute()
-    if member.count == None:
+    if member.data is None:
         raise HTTPException(status_code=400, detail="User not found")
+    # try:
+    print(member.data[0].get('id'))
     try:
-        data, count = supabase.table('access_control').insert({
-        "project_id": project_id,
+        data = supabase.table('access_control').insert({
+        "project": project_id,
         "member": member.data[0].get('id')
     }).execute()
     except APIError as e:
         raise HTTPException(status_code=400, detail=e.message)
     return data
+
 
 def continue_run_request(client, project, msg, t_id):
     thread_message = client.beta.threads.messages.create(
@@ -175,7 +181,7 @@ def new_run_request(client, msg, project_id):
     objects = []
     for i in id_list:
         objects.append({"file_id": i, "tools": [{"type": "code_interpreter"}]})
-    
+
     start = timer()
 
     # creating empty thread and message
