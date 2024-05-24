@@ -15,23 +15,29 @@ description = """
 **GET** = running the assistant and getting the assistant response.\n
 **PATCH** = After updating the creatego JSON file, uploads the updated JSON to the thread.
 
-## /Projects/
+## /projects/
 
-**GET** = Get all the projects.
+**GET** = Get all the projects of a user.
 
-## /Chat/
+## /chat/
 
 **GET** = Get chat history of a project or a thread.
 
-## /Upload/
+## /upload/
 
 **POST** = Upload chat history to the database.
 
-## /Add/
+## /add/
 
-**POST** = Add a member to a group chat.
+**POST** = Add a member to a group chat using the user email.
+
+
+## /remove/
+
+**POST** = Remove a member from a group chat using user uuid.
 
 """
+
 
 app = FastAPI(title="Creatego API", description=description)
 
@@ -102,8 +108,8 @@ def patch_assistant(project: int):
 
 
 @app.get('/projects/')
-def project_list():
-    return get_projects()
+def project_list(user_id: str):
+    return get_projects(owner=user_id)
 
 
 @app.get('/chat/')

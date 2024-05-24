@@ -111,9 +111,9 @@ def init_supabase(url: str = os.environ.get("SUPABASE_URL"), key: str = os.envir
     return supabase
 
 
-def get_projects(supabase):
+def get_projects(owner):
     response = supabase.table('projects').select(
-        "name", "id", count='exact').execute()
+        "name", "id", count='exact').eq("owner", owner).execute()
     return response
 
 
