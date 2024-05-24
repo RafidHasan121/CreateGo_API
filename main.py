@@ -36,6 +36,11 @@ description = """
 
 **POST** = Remove a member from a group chat using user uuid.
 
+
+## /members/
+
+**GET** =  list of member that are in user's project
+
 """
 
 
@@ -45,7 +50,7 @@ client = OpenAI(api_key=os.environ.get("API_KEY"))
 
 
 # API list
-@app.get("/{thread_id}")
+@app.get("/")
 def get_assistant(thread_id: str):
     try:
         run = client.beta.threads.runs.create(
@@ -160,11 +165,19 @@ def add_member_to_groupchat(data: add_member_to_groupchat_model):
     insert_group_thread(project_id=data.project_id, email=data.email)
     return {"status": "completed"}
 
+
 class remove_member_from_groupchat_model(BaseModel):
     project_id: int
     uuid: str
+
 
 @app.post('/remove/', status_code=200)
 def remove_member_from_groupchat(data: add_member_to_groupchat_model):
     remove_group_thread(project_id=data.project_id, uuid=data.uuid)
     return {"status": "completed"}
+
+
+@app.get('/members/', status_code=200)
+def list_of_added_groupchat_members(user_id: int):
+    return get_group_thread(user_id)
+
