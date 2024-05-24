@@ -70,7 +70,7 @@ def json_uploader(client, project_id):
 def streaming_generator(run):
     for chunk in run:
         if chunk.event == "thread.message.delta":
-            print(chunk.data)
+            # print(chunk.data)
             yield chunk.data.delta.content[0].text.value
 
 
@@ -241,3 +241,15 @@ def get_request(client, run_id, thread_id):
         return result
     else:
         return False
+
+def remove_group_thread(project_id, uuid):
+    # untested because db removed
+    owner = supabase.table('projects').select('owner').eq('id', project_id).execute()
+    if (owner != uuid):
+        try:
+            data = supabase.table('access_control').delete().eq('project', project_id).eq('member', uuid).execute()
+        except APIError as e:
+            raise HTTPException(status_code=400, detail=e.message)
+        return data
+    else:
+        raise HTTPException(status_code=400, detail="Owner cannot be removed from the project groupchat")
