@@ -1,7 +1,7 @@
-# FastAPI Project
+# Creatego API FastAPI Project
 
 ## Overview
-Creatego APIs built by Rafid. 
+Creatego APIs built by Rafid in FastAPI.
 
 ## Installation
 1. Clone the repository:
